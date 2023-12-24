@@ -154,6 +154,11 @@ elif host_machine.system() == 'dripos'
 	rtdl_include_dirs += include_directories('sysdeps/dripos/include')
 	libc_include_dirs += include_directories('sysdeps/dripos/include')
 	subdir('sysdeps/dripos')
+elif host_machine.system() == 'flux'
+	disable_linux_option = true
+	rtdl_include_dirs += include_directories('sysdeps/flux/include')
+	libc_include_dirs += include_directories('sysdeps/flux/include')
+	subdir('sysdeps/flux')
 else
 	error('No sysdeps defined for OS: ' + host_machine.system())
 endif
@@ -362,7 +367,7 @@ if not headers_only
 			install: false
 		)
 		libc_static = static_library('c', libc_all_sources,
-			cpp_args: static_cpp_args + ['-fno-stack-protector'],
+			cpp_args: static_cpp_args + ['-fno-stack-protector', '-fno-use-cxa-atexit'],
 			include_directories: libc_include_dirs,
 			dependencies: libc_deps + rtlib_deps,
 			link_with: [ld_static_lib],

@@ -1,0 +1,8 @@
+[host_machine]
+system = 'flux'
+cpu_family = 'riscv64'
+cpu = 'riscv64'
+endian = 'little'
+
+[built-in options]
+headers_only = true

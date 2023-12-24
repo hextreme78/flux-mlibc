@@ -1,0 +1,15 @@
+[binaries]
+c = 'riscv64-flux-gcc'
+cpp = 'riscv64-flux-g++'
+ar = 'riscv64-flux-ar'
+strip = 'riscv64-flux-strip'
+
+[host_machine]
+system = 'flux'
+cpu_family = 'riscv64'
+cpu = 'riscv64'
+endian = 'little'
+
+[built-in options]
+default_library = 'static'
+mlibc_no_headers = true
