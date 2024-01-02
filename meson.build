@@ -155,6 +155,7 @@ elif host_machine.system() == 'dripos'
 	libc_include_dirs += include_directories('sysdeps/dripos/include')
 	subdir('sysdeps/dripos')
 elif host_machine.system() == 'flux'
+	provides_bits_syscall_h = true
 	disable_linux_option = true
 	rtdl_include_dirs += include_directories('sysdeps/flux/include')
 	libc_include_dirs += include_directories('sysdeps/flux/include')

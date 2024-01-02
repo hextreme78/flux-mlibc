@@ -51,8 +51,9 @@ if not no_headers
 		subdir: 'abi-bits'
 	)
 	install_headers(
-		'include/flux/syscall.h',
-		subdir: 'flux'
+		'include/bits/syscall.h',
+		'include/bits/syscall_defs.h',
+		subdir: 'bits'
 	)
 endif
 

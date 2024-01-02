@@ -1,7 +1,8 @@
-#include <flux/syscall.h>
+#include <bits/syscall.h>
 
 #include <mlibc/fsfd_target.hpp>
 #include <abi-bits/socklen_t.h>
+#include <abi-bits/fcntl.h>
 
 #include <poll.h>
 #include <sys/types.h>
@@ -53,7 +54,7 @@ namespace mlibc
 
 	int sys_open(const char *pathname, int flags, mode_t mode, int *fd)
 	{
-		long ret = syscall(SYS_open, pathname, flags, mode);
+		long ret = syscall(SYS_openat, AT_FDCWD, pathname, flags, mode);
 		if (ret < 0) {
 			return -ret;
 		}
@@ -131,19 +132,17 @@ namespace mlibc
 
 	int sys_close(int fd)
 	{
-		return syscall(SYS_close, fd);
+		return -syscall(SYS_close, fd);
 	}
 
 	int sys_access(const char *path, int mode)
 	{
-		sys_libc_log("mlibc warning: sys_access: not implemented");
-		return 0;
+		return -syscall(SYS_faccessat, AT_FDCWD, path, mode, 0);
 	}
 
 	int sys_faccessat(int dirfd, const char *pathname, int mode, int flags)
 	{
-		sys_libc_log("mlibc warning: sys_faccessat: not implemented");
-		return 0;
+		return -syscall(SYS_faccessat, dirfd, pathname, mode, flags);
 	}
 
 	int sys_dup(int fd, int flags, int *newfd)
@@ -158,7 +157,11 @@ namespace mlibc
 
 	int sys_dup2(int fd, int flags, int newfd)
 	{
-		return syscall(SYS_dup2, fd, newfd);
+		long ret = syscall(SYS_dup2, fd, newfd);
+		if (ret < 0) {
+			return -ret;
+		}
+		return 0;
 	}
 
 	int sys_isatty(int fd)
@@ -170,21 +173,10 @@ namespace mlibc
 	int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags,
 			struct stat *statbuf)
 	{
-		long ret = 0;
-		switch (fsfdt) {
-			case fsfd_target::fd:
-				ret = syscall(SYS_fstat, fd, statbuf);
-				break;
-			case fsfd_target::path:
-				ret = syscall(SYS_stat, path, statbuf);
-				break;
-			default:
-				sys_libc_log("mlibc warning: sys_stat: "
-						"unsupported fsfd target");
-				return EINVAL;
+		if (fsfdt == fsfd_target::fd) {
+			flags |= AT_EMPTY_PATH;
 		}
-
-		return -ret;
+		return -syscall(SYS_fstatat, fd, path, statbuf, flags);
 	}
 
 	int sys_statvfs(const char *path, struct statvfs *out)
@@ -212,12 +204,12 @@ namespace mlibc
 
 	int sys_rmdir(const char *path)
 	{
-		return syscall(SYS_rmdir, path);
+		return -syscall(SYS_unlinkat, AT_FDCWD, path, AT_REMOVEDIR);
 	}
 
 	int sys_ftruncate(int fd, size_t size)
 	{
-		return syscall(SYS_ftruncate, fd, size);
+		return -syscall(SYS_truncate, fd, NULL, size, AT_EMPTY_PATH);
 	}
 
 	int sys_fallocate(int fd, off_t offset, size_t size)
@@ -228,13 +220,16 @@ namespace mlibc
 
 	int sys_unlinkat(int fd, const char *path, int flags)
 	{
-		sys_libc_log("mlibc warning: sys_unlinkat: not implemented");
-		return 0;
+		return -syscall(SYS_unlinkat, fd, path, flags);
 	}
 
 	int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd)
 	{
-		sys_libc_log("mlibc warning: sys_openat: not implemented");
+		long ret = syscall(SYS_openat, dirfd, path, flags, mode);
+		if (ret < 0) {
+			return -ret;
+		}
+		*fd = ret;
 		return 0;
 	}
 
@@ -264,26 +259,22 @@ namespace mlibc
 
 	gid_t sys_getgid()
 	{
-		sys_libc_log("mlibc warning: sys_getgid: not implemented");
-		return 0;
+		return syscall(SYS_getgid);
 	}
 
 	gid_t sys_getegid()
 	{
-		sys_libc_log("mlibc warning: sys_getegid: not implemented");
-		return 0;
+		return syscall(SYS_getegid);
 	}
 
 	uid_t sys_getuid()
 	{
-		sys_libc_log("mlibc warning: sys_getuid: not implemented");
-		return 0;
+		return syscall(SYS_getuid);
 	}
 
 	uid_t sys_geteuid()
 	{
-		sys_libc_log("mlibc warning: sys_geteuid: not implemented");
-		return 0;
+		return syscall(SYS_geteuid);
 	}
 
 	pid_t sys_getpid()
@@ -299,8 +290,7 @@ namespace mlibc
 
 	pid_t sys_getppid()
 	{
-		sys_libc_log("mlibc warning: sys_getppid: not implemented");
-		return 0;
+		return syscall(SYS_getppid);
 	}
 
 	pid_t sys_getpgid(pid_t pid, pid_t *pgid)
@@ -387,7 +377,7 @@ namespace mlibc
 
 	int sys_execve(const char *path, char *const argv[], char *const envp[])
 	{
-		return syscall(SYS_execve, path, argv, envp);
+		return -syscall(SYS_execve, path, argv, envp);
 	}
 
 	int sys_pselect(int num_fds, fd_set *read_set, fd_set *write_set,
@@ -448,17 +438,17 @@ namespace mlibc
 
 	int sys_getcwd(char *buffer, size_t size)
 	{
-		return syscall(SYS_getcwd, buffer, size);
+		return -syscall(SYS_getcwd, buffer, size);
 	}
 
 	int sys_chdir(const char *path)
 	{
-		return syscall(SYS_chdir, path);
+		return -syscall(SYS_chdir, 0, path, 0);
 	}
 
 	int sys_fchdir(int fd)
 	{
-		return syscall(SYS_fchdir, fd);
+		return -syscall(SYS_chdir, fd, NULL, AT_EMPTY_PATH);
 	}
 
 	int sys_chroot(const char *path)
@@ -469,47 +459,43 @@ namespace mlibc
 
 	int sys_mkdir(const char *path, mode_t mode)
 	{
-		return syscall(SYS_mkdir, path, mode);
+		return -syscall(SYS_mkdirat, AT_FDCWD, path, mode);
 	}
 
 	int sys_mkdirat(int dirfd, const char *path, mode_t mode)
 	{
-		sys_libc_log("mlibc warning: sys_mkdirat: not implemented");
-		return 0;
+		return -syscall(SYS_mkdirat, dirfd, path, mode);
 	}
 
 	int sys_link(const char *old_path, const char *new_path)
 	{
-		return syscall(SYS_link, old_path, new_path);
+		return -syscall(SYS_linkat, AT_FDCWD, old_path, AT_FDCWD, new_path, 0);
 	}
 
 	int sys_linkat(int olddirfd, const char *old_path, int newdirfd,
 			const char *new_path, int flags)
 	{
-		sys_libc_log("mlibc warning: sys_linkat: not implemented");
-		return 0;
+		return -syscall(SYS_linkat, olddirfd, old_path, newdirfd, new_path, flags);
 	}
 
 	int sys_symlink(const char *target_path, const char *link_path)
 	{
-		return syscall(SYS_symlink, target_path, link_path);
+		return -syscall(SYS_symlinkat, target_path, AT_FDCWD, link_path);
 	}
 
 	int sys_symlinkat(const char *target_path, int dirfd, const char *link_path)
 	{
-		sys_libc_log("mlibc warning: sys_symlinkat: not implemented");
-		return 0;
+		return -syscall(SYS_symlinkat, target_path, dirfd, link_path);
 	}
 
 	int sys_rename(const char *path, const char *new_path)
 	{
-		return syscall(SYS_rename, path, new_path);
+		return -syscall(SYS_renameat2, AT_FDCWD, path, AT_FDCWD, new_path, 0);
 	}
 
 	int sys_renameat(int olddirfd, const char *old_path, int newdirfd, const char *new_path)
 	{
-		sys_libc_log("mlibc warning: sys_renameat: not implemented");
-		return 0;
+		return -syscall(SYS_renameat2, olddirfd, old_path, newdirfd, new_path, 0);
 	}
 
 	int sys_fcntl(int fd, int request, va_list args, int *result)
@@ -520,7 +506,6 @@ namespace mlibc
 		}
 		*result = ret;
 		return 0;
-
 	}
 
 	int sys_ttyname(int fd, char *buf, size_t size)
@@ -554,18 +539,17 @@ namespace mlibc
 
 	int sys_chmod(const char *pathname, mode_t mode)
 	{
-		return syscall(SYS_chmod, pathname, mode);
+		return -syscall(SYS_fchmodat, AT_FDCWD, pathname, mode, 0);
 	}
 
 	int sys_fchmod(int fd, mode_t mode)
 	{
-		return syscall(SYS_fchmod, fd, mode);
+		return -syscall(SYS_fchmodat, fd, NULL, mode, AT_EMPTY_PATH);
 	}
 
 	int sys_fchmodat(int fd, const char *pathname, mode_t mode, int flags)
 	{
-		sys_libc_log("mlibc warning: sys_fchmodat: not implemented");
-		return 0;
+		return -syscall(SYS_fchmodat, fd, pathname, mode, flags);
 	}
 
 	int sys_utimensat(int dirfd, const char *pathname, const struct timespec times[2], int flags)
@@ -666,7 +650,7 @@ namespace mlibc
 
 	int sys_pipe(int *fds, int flags)
 	{
-		return syscall(SYS_pipe2, fds, flags);
+		return -syscall(SYS_pipe2, fds, flags);
 	}
 
 	int sys_socketpair(int domain, int type_and_flags, int proto, int *fds)
@@ -774,11 +758,7 @@ namespace mlibc
 
 	int sys_mkfifoat(int dirfd, const char *path, int mode)
 	{
-		/*if (dirfd == AT_FDCWD) {
-			return syscall(SYS_mkfifo, path, mode);
-		}*/
-		sys_libc_log("mlibc warning: sys_mkfifoat: not implemented");
-		return 0;
+		return -syscall(SYS_mkfifoat, dirfd, path, mode);
 	}
 
 	int sys_getentropy(void *buffer, size_t length)
@@ -789,8 +769,7 @@ namespace mlibc
 
 	int sys_mknodat(int dirfd, const char *path, int mode, int dev)
 	{
-		sys_libc_log("mlibc warning: sys_mknodat: not implemented");
-		return 0;
+		return -syscall(SYS_mknodat, dirfd, path, mode, dev);
 	}
 
 	int sys_umask(mode_t mode, mode_t *old)
@@ -819,7 +798,7 @@ namespace mlibc
 	int sys_fchownat(int dirfd, const char *pathname, uid_t owner,
 			gid_t group, int flags)
 	{
-
+		return -syscall(SYS_fchownat, dirfd, pathname, owner, group, flags);
 	}
 
 	int sys_sigaltstack(const stack_t *ss, stack_t *oss)
@@ -912,8 +891,7 @@ namespace mlibc
 
 	int sys_uname(struct utsname *buf)
 	{
-		sys_libc_log("mlibc warning: sys_uname: not implemented");
-		return 0;
+		return syscall(SYS_uname, buf);
 	}
 
 	int sys_pause()
@@ -1003,7 +981,11 @@ namespace mlibc
 	int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru,
 			pid_t *ret_pid)
 	{
-		sys_libc_log("mlibc warning: sys_waitpid: not implemented");
+		long ret = syscall(SYS_wait4, pid, status, flags, ru);
+		if (ret < 0) {
+			return -ret;
+		}
+		*ret_pid = ret;
 		return 0;
 	}
 
