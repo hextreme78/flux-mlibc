@@ -3,6 +3,7 @@
 #include <mlibc/fsfd_target.hpp>
 #include <abi-bits/socklen_t.h>
 #include <abi-bits/fcntl.h>
+#include <abi-bits/stat.h>
 
 #include <poll.h>
 #include <sys/types.h>
@@ -459,12 +460,12 @@ namespace mlibc
 
 	int sys_mkdir(const char *path, mode_t mode)
 	{
-		return -syscall(SYS_mkdirat, AT_FDCWD, path, mode);
+		return -syscall(SYS_mknodat, AT_FDCWD, path, S_IFDIR | mode, 0, NULL);
 	}
 
 	int sys_mkdirat(int dirfd, const char *path, mode_t mode)
 	{
-		return -syscall(SYS_mkdirat, dirfd, path, mode);
+		return -syscall(SYS_mknodat, dirfd, path, S_IFDIR | mode, 0, NULL);
 	}
 
 	int sys_link(const char *old_path, const char *new_path)
@@ -480,12 +481,12 @@ namespace mlibc
 
 	int sys_symlink(const char *target_path, const char *link_path)
 	{
-		return -syscall(SYS_symlinkat, target_path, AT_FDCWD, link_path);
+		return -syscall(SYS_mknodat, AT_FDCWD, link_path, S_IFLNK | S_IRWXU | S_IRWXG | S_IRWXO, 0, target_path);
 	}
 
 	int sys_symlinkat(const char *target_path, int dirfd, const char *link_path)
 	{
-		return -syscall(SYS_symlinkat, target_path, dirfd, link_path);
+		return -syscall(SYS_mknodat, dirfd, link_path, S_IFLNK | S_IRWXU | S_IRWXG | S_IRWXO, 0, target_path);
 	}
 
 	int sys_rename(const char *path, const char *new_path)
@@ -758,7 +759,7 @@ namespace mlibc
 
 	int sys_mkfifoat(int dirfd, const char *path, int mode)
 	{
-		return -syscall(SYS_mkfifoat, dirfd, path, mode);
+		return -syscall(SYS_mknodat, dirfd, path, S_IFIFO | mode, 0, NULL);
 	}
 
 	int sys_getentropy(void *buffer, size_t length)
@@ -769,7 +770,7 @@ namespace mlibc
 
 	int sys_mknodat(int dirfd, const char *path, int mode, int dev)
 	{
-		return -syscall(SYS_mknodat, dirfd, path, mode, dev);
+		return -syscall(SYS_mknodat, dirfd, path, mode, dev, NULL);
 	}
 
 	int sys_umask(mode_t mode, mode_t *old)
@@ -891,7 +892,7 @@ namespace mlibc
 
 	int sys_uname(struct utsname *buf)
 	{
-		return syscall(SYS_uname, buf);
+		return -syscall(SYS_uname, buf);
 	}
 
 	int sys_pause()

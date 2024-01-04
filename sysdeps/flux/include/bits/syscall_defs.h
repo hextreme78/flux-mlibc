@@ -21,24 +21,21 @@
 #define SYS_execve    18
 #define SYS_getcwd    19
 #define SYS_chdir     20
-#define SYS_mkdirat   21
-#define SYS_linkat    22
-#define SYS_symlinkat 23
-#define SYS_renameat2 24
-#define SYS_fcntl     25
-#define SYS_fchmodat  26
-#define SYS_pipe2     27
-#define SYS_mkfifoat  28
-#define SYS_mknodat   29
-#define SYS_umask     30
-#define SYS_fchownat  31
-#define SYS_uname     32
-#define SYS_wait4     33
-#define SYS_brk       34
-#define SYS_getuid    35
-#define SYS_geteuid   36
-#define SYS_getgid    37
-#define SYS_getegid   38
+#define SYS_linkat    21
+#define SYS_renameat2 22
+#define SYS_fcntl     23
+#define SYS_fchmodat  24
+#define SYS_pipe2     25
+#define SYS_mknodat   26
+#define SYS_umask     27
+#define SYS_fchownat  28
+#define SYS_uname     29
+#define SYS_wait4     30
+#define SYS_brk       31
+#define SYS_getuid    32
+#define SYS_geteuid   33
+#define SYS_getgid    34
+#define SYS_getegid   35
 
 #endif
 
