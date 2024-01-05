@@ -32,10 +32,20 @@
 #define SYS_uname     29
 #define SYS_wait4     30
 #define SYS_brk       31
-#define SYS_getuid    32
-#define SYS_geteuid   33
-#define SYS_getgid    34
-#define SYS_getegid   35
+#define SYS_getresuid 32
+#define SYS_getresgid 33
+#define SYS_setuid    34
+#define SYS_setgid    35
+#define SYS_setresuid 36
+#define SYS_setresgid 37
+#define SYS_isatty    38
+#define SYS_getsid    39
+#define SYS_setsid    40
+#define SYS_getpgid   41
+#define SYS_setpgid   42
+#define SYS_gettid    43
+#define SYS_fsync     44
+#define SYS_fdatasync 45
 
 #endif
 

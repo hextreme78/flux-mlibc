@@ -167,7 +167,10 @@ namespace mlibc
 
 	int sys_isatty(int fd)
 	{
-		sys_libc_log("mlibc warning: sys_isatty: not implemented");
+		long ret = syscall(SYS_isatty, fd);
+		if (ret < 0) {
+			return -ret;
+		}
 		return 0;
 	}
 
@@ -260,22 +263,30 @@ namespace mlibc
 
 	gid_t sys_getgid()
 	{
-		return syscall(SYS_getgid);
+		gid_t rgid;
+		syscall(SYS_getresgid, &rgid, NULL, NULL);
+		return rgid;
 	}
 
 	gid_t sys_getegid()
 	{
-		return syscall(SYS_getegid);
+		gid_t egid;
+		syscall(SYS_getresgid, NULL, &egid, NULL);
+		return egid;
 	}
 
 	uid_t sys_getuid()
 	{
-		return syscall(SYS_getuid);
+		uid_t ruid;
+		syscall(SYS_getresuid, &ruid, NULL, NULL);
+		return ruid;
 	}
 
 	uid_t sys_geteuid()
 	{
-		return syscall(SYS_geteuid);
+		uid_t euid;
+		syscall(SYS_getresuid, NULL, &euid, NULL);
+		return euid;
 	}
 
 	pid_t sys_getpid()
@@ -285,8 +296,7 @@ namespace mlibc
 
 	pid_t sys_gettid()
 	{
-		sys_libc_log("mlibc warning: sys_gettid: not implemented");
-		return 0;
+		return syscall(SYS_gettid);
 	}
 
 	pid_t sys_getppid()
@@ -296,44 +306,49 @@ namespace mlibc
 
 	pid_t sys_getpgid(pid_t pid, pid_t *pgid)
 	{
-		sys_libc_log("mlibc warning: sys_getpgid: not implemented");
+		long ret = syscall(SYS_getpgid, pid);
+		if (ret < 0) {
+			*pgid = -1;
+			return -ret;
+		}
+		*pgid = ret;
 		return 0;
 	}
 
 	pid_t sys_getsid(pid_t pid, pid_t *sid)
 	{
-		sys_libc_log("mlibc warning: sys_getsid: not implemented");
+		long ret = syscall(SYS_getsid, pid);
+		if (ret < 0) {
+			*sid = -1;
+			return -ret;
+		}
+		*sid = ret;
 		return 0;
 	}
 
 	int sys_setpgid(pid_t pid, pid_t pgid)
 	{
-		sys_libc_log("mlibc warning: sys_pgid: not implemented");
-		return 0;
+		return -syscall(SYS_setpgid, pid, pgid);
 	}
 
 	int sys_setuid(uid_t uid)
 	{
-		sys_libc_log("mlibc warning: sys_setuid: not implemented");
-		return 0;
+		return -syscall(SYS_setuid, uid);
 	}
 
 	int sys_seteuid(uid_t euid)
 	{
-		sys_libc_log("mlibc warning: sys_seteuid: not implemented");
-		return 0;
+		return -syscall(SYS_setresuid, -1, euid, -1);
 	}
 
 	int sys_setgid(gid_t gid)
 	{
-		sys_libc_log("mlibc warning: sys_setgid: not implemented");
-		return 0;
+		return -syscall(SYS_setgid, gid);
 	}
 
 	int sys_setegid(gid_t egid)
 	{
-		sys_libc_log("mlibc warning: sys_setegid: not implemented");
-		return 0;
+		return -syscall(SYS_setresgid, -1, egid, -1);
 	}
 
 	int sys_getgroups(size_t size, const gid_t *list, int *ret)
@@ -528,14 +543,12 @@ namespace mlibc
 
 	int sys_fsync(int fd)
 	{
-		sys_libc_log("mlibc warning: sys_fsync: not implemented");
-		return 0;
+		return -syscall(SYS_fsync, fd);
 	}
 
 	int sys_fdatasync(int fd)
 	{
-		sys_libc_log("mlibc warning: sys_fdatasync: not implemented");
-		return 0;
+		return -syscall(SYS_fdatasync, fd);
 	}
 
 	int sys_chmod(const char *pathname, mode_t mode)
@@ -615,7 +628,12 @@ namespace mlibc
 
 	int sys_setsid(pid_t *sid)
 	{
-		sys_libc_log("mlibc warning: sys_setsid: not implemented");
+		long ret = syscall(SYS_setsid);
+		if (ret < 0) {
+			*sid = -1;
+			return -ret;
+		}
+		*sid = ret;
 		return 0;
 	}
 
@@ -903,38 +921,32 @@ namespace mlibc
 
 	int sys_setresuid(uid_t ruid, uid_t euid, uid_t suid)
 	{
-		sys_libc_log("mlibc warning: sys_setresuid: not implemented");
-		return 0;
+		return -syscall(SYS_setresuid, ruid, euid, suid);
 	}
 
 	int sys_setresgid(gid_t rgid, gid_t egid, gid_t sgid)
 	{
-		sys_libc_log("mlibc warning: sys_setresgid: not implemented");
-		return 0;
+		return -syscall(SYS_setresgid, rgid, egid, sgid);
 	}
 
 	int sys_getresuid(uid_t *ruid, uid_t *euid, uid_t *suid)
 	{
-		sys_libc_log("mlibc warning: sys_getresuid: not implemented");
-		return 0;
+		return -syscall(SYS_getresuid, ruid, euid, suid);
 	}
 
 	int sys_getresgid(gid_t *rgid, gid_t *egid, gid_t *sgid)
 	{
-		sys_libc_log("mlibc warning: sys_getresgid: not implemented");
-		return 0;
+		return -syscall(SYS_getresgid, rgid, egid, sgid);
 	}
 
 	int sys_setreuid(uid_t ruid, uid_t euid)
 	{
-		sys_libc_log("mlibc warning: sys_setreuid: not implemented");
-		return 0;
+		return -syscall(SYS_setresuid, ruid, euid, -1);
 	}
 
 	int sys_setregid(gid_t rgid, gid_t egid)
 	{
-		sys_libc_log("mlibc warning: sys_setregid: not implemented");
-		return 0;
+		return -syscall(SYS_setresgid, rgid, egid, -1);
 	}
 
 	int sys_if_indextoname(unsigned int index, char *name)
